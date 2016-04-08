@@ -1,23 +1,42 @@
 import m from 'mithril';
 import { Tasks } from '../../api/tasks.js';
-import {reactive} from '../../helper/reactive';
 
-const controller = reactive(function(props) {
+
+function controller(props) {
   return {
-    getData() {
-      return {
-        tasks: Tasks.find({}).fetch()
-      }
+    deleteTask(taskId) {
+      Tasks.remove(taskId);
+    },
+    toggleTask(task) {
+      Tasks.update(task._id, {
+       $set: {checked: !task.checked},
+     });
     }
   }
-})
+}
 
 function view(ctrl, props) {
-  const {data} = ctrl;
-  const {tasks} = data();
+  let {tasks} = props;
 
-  return m('.stuff',
-    m('ul', tasks.map(task => m('li', task.title)))
+  if (props.hideCompleted()) {
+    tasks = tasks.filter(task => !task.checked);
+  }
+
+  return m('.todo-list',
+    m('ul', tasks.map(task =>
+      m(`li${task.checked ? '.checked': ''}`, {key: task._id}, [
+        m('button.delete', {
+          onclick: () => ctrl.deleteTask(task._id)
+        }, m.trust('&times;')),
+        m('input', {
+          type: 'checkbox',
+          readonly: true,
+          checked: task.checked,
+          onclick: () => ctrl.toggleTask(task)
+        }),
+        m('span.text', task.title),
+      ])
+    ))
   )
 }
 
