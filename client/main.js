@@ -3,5 +3,5 @@ import {Meteor} from 'meteor/meteor';
 import App from '../imports/ui/app.js';
 
 Meteor.startup(() => {
-  m.mount(document.getElementById('app'), m(App));
+  m.mount(document.getElementById('app'), m(new App));
 });

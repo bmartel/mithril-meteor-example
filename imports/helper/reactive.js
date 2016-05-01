@@ -1,24 +1,50 @@
 import m from 'mithril';
+import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker'
+import Component from './component';
 
-export function reactive(controller) {
-  return function(props) {
-    let instance = controller(props);
+export class ReactiveComponent extends Component {
 
-    instance.data = m.prop({});
+  // Initialize component data
+  constructor() {
+    super();
+    this.data = m.prop({});
+  }
 
-    const computation = Tracker.nonreactive(() => {
-      return Tracker.autorun((c) => {
-        m.startComputation();
-        instance.data(instance.getData());
-        m.endComputation();
-      })
+  // Update component data with incoming data subscription changes
+  runComputation() {
+    return Tracker.autorun((c) => {
+      m.startComputation();
+      this.data(this.getState());
+      m.endComputation();
     });
+  }
 
-    instance.onunload = function() {
-      computation.stop();
+  // Run once per controller load, to subscribe to any publications required
+  getPublications() {
+    // this.subscribe('publication-name-here');
+  }
+
+  // Meteor subscribe to publications
+  subscribe(publication, ...params) {
+    return Meteor.subscribe(publication, ...params);
+  }
+
+  // Component calculated state from subscriptions
+  getState() {
+    return {};
+  }
+
+  // Base controller to automatically handle data subscription lifecycle
+  controller(props) {
+    this.getPublications();
+    const reactive = this.runComputation();
+
+    return {
+      onunload: () => {
+        reactive.stop();
+        this.data({});
+      }
     }
-
-    return instance;
   }
 }
